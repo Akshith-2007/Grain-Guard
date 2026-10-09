@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GrainGuard Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+<style>
+  :root {
+    --bg: #f4f2ec; --card: #ffffff; --ink: #1f2420; --muted: #6b716b; --line: #e3e0d6;
+    --safe: #2f8a4c; --safe-bg: #e5f3e8; --warn: #b7791f; --warn-bg: #fbf0dc;
+    --danger: #c0392b; --danger-bg: #fbe4e1; --info: #2c6fb7; --info-bg: #e3eef9;
+    --temp: #d9622b; --hum: #2c6fb7; --gas: #8e44ad; --grain: #a07a2c;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141714; --card: #1d211e; --ink: #e8ebe7; --muted: #9aa19b; --line: #2e342f;
+      --safe: #5cc27a; --safe-bg: #1f3325; --warn: #e4a948; --warn-bg: #3a2e18;
+      --danger: #ff6b5b; --danger-bg: #3d1f1b; --info: #6aa8ee; --info-bg: #1c2a3b;
+      --temp: #f08a55; --hum: #6aa8ee; --gas: #c08ae0; --grain: #d4ad5c;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .logo { font-size: 30px; }
+  .brand h1 { margin: 0; font-size: 22px; letter-spacing: .3px; }
+  .brand small { color: var(--muted); display: block; font-size: 13px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--card); border: 1px solid var(--line); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .online .dot { background: var(--safe); box-shadow: 0 0 0 0 var(--safe); animation: pulse 2s infinite; }
+  .offline .dot { background: var(--danger); }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--safe) 60%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+  .banner { border-radius: 14px; padding: 16px 18px; margin-bottom: 18px; display: flex; gap: 14px; align-items: center; border: 1px solid transparent; }
+  .banner .big { font-size: 28px; }
+  .banner h2 { margin: 0; font-size: 18px; }
+  .banner p { margin: 2px 0 0; font-size: 14px; }
+  .banner.SAFE { background: var(--safe-bg); color: var(--safe); }
+  .banner.WARNING { background: var(--warn-bg); color: var(--warn); }
+  .banner.DANGER { background: var(--danger-bg); color: var(--danger); animation: flash 1.2s infinite alternate; }
+  .banner.WAIT { background: var(--card); color: var(--muted); border-color: var(--line); }
+  @keyframes flash { to { border-color: var(--danger); } }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+  .card .label { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .card .value { font-size: 32px; font-weight: 700; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+  .card .value small { font-size: 16px; font-weight: 500; color: var(--muted); }
+  .card .sub { font-size: 13px; color: var(--muted); }
+  .tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: .4px; }
+  .tag.SAFE, .tag.DRY, .tag.CLEAR, .tag.OK { background: var(--safe-bg); color: var(--safe); }
+  .tag.WARNING, .tag.MEDIUM, .tag.HIGH { background: var(--warn-bg); color: var(--warn); }
+  .tag.DANGER, .tag.WET, .tag.MOTION { background: var(--danger-bg); color: var(--danger); }
+  .tag.WARMING_UP, .tag.UNKNOWN, .tag.NA { background: var(--info-bg); color: var(--info); }
+  .meter { height: 8px; border-radius: 4px; background: var(--line); margin-top: 10px; position: relative; overflow: hidden; }
+  .meter > span { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transition: width .4s; }
+  .meter > i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--card); }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin: 6px 0 12px; }
+  .toolbar h3 { margin: 0; font-size: 16px; }
+  .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .seg button { border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 7px; font: inherit; font-size: 13px; cursor: pointer; }
+  .seg button.active { background: var(--ink); color: var(--card); }
+
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .chart-card h4 { margin: 0 0 4px; font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .legend { font-weight: 400; font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .legend b { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+  .chart { position: relative; height: 200px; }
+  .chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .chart .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--card); font-size: 12px; padding: 6px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -110%); display: none; z-index: 2; }
+  svg text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .events { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow: auto; }
+  .events li { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .events li:last-child { border-bottom: 0; }
+  .events time { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; width: 64px; }
+  .table-scroll { overflow-x: auto; max-height: 360px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--card); }
+  .muted { color: var(--muted); }
+
+  footer { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; color: var(--muted); font-size: 13px; }
+  .btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 8px 14px; border-radius: 9px; font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+  .btn:hover { border-color: var(--muted); }
+  .btn.danger { color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo">🌾</span>
+      <div>
+        <h1>GrainGuard</h1>
+        <small>Smart grain storage monitor · <span id="deviceId">grainguard-01</span></small>
+      </div>
+    </div>
+    <span id="conn" class="pill"><span class="dot"></span><span id="connText">Connecting…</span></span>
+  </header>
+
+  <div id="banner" class="banner WAIT">
+    <span class="big" id="bannerIcon">⏳</span>
+    <div><h2 id="bannerTitle">Waiting for the ESP32…</h2><p id="bannerText">Readings appear here as soon as the device posts its first one.</p></div>
+  </div>
+
+  <section class="cards">
+    <div class="card">
+      <div class="label">🌡️ Temperature <span class="tag NA" id="tempTag">—</span></div>
+      <div class="value" id="temp">--<small> °C</small></div>
+      <div class="sub" id="tempSub">Ideal storage: below 30 °C</div>
+    </div>
+    <div class="card">
+      <div class="label">💧 Air humidity <span class="tag NA" id="humTag">—</span></div>
+      <div class="value" id="hum">--<small> %</small></div>
+      <div class="sub">Ideal storage: below 65 %</div>
+    </div>
+    <div class="card">
+      <div class="label">🌾 Grain moisture <span class="tag NA" id="grainTag">—</span></div>
+      <div class="value" id="grain">--<small> raw</small></div>
+      <div class="meter"><span id="grainBar" style="background:var(--grain);width:0"></span><i style="left:36.6%"></i><i style="left:68.4%"></i></div>
+      <div class="sub" style="margin-top:6px">Wet &lt;1500 · Medium &lt;2800 · Dry</div>
+    </div>
+    <div class="card">
+      <div class="label">🧪 Gas (MQ) <span class="tag NA" id="gasTag">—</span></div>
+      <div class="value" id="gas">--<small> raw</small></div>
+      <div class="meter"><span id="gasBar" style="width:0"></span><i style="left:43.9%"></i><i style="left:61%"></i></div>
+      <div class="sub" style="margin-top:6px">Warning ≥1800 · Danger ≥2500</div>
+    </div>
+    <div class="card">
+      <div class="label">🚶 Motion (PIR) <span class="tag NA" id="motionTag">—</span></div>
+      <div class="value" id="motion" style="font-size:24px">--</div>
+      <div class="sub" id="motionSub">No motion recorded</div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <h3>History</h3>
+    <div class="seg" id="range">
+      <button data-n="30">Last 30</button>
+      <button data-n="120" class="active">Last 120</button>
+      <button data-n="500">Last 500</button>
+      <button data-n="5000">All</button>
+    </div>
+  </div>
+
+  <section class="charts">
+    <div class="card chart-card">
+      <h4>Temperature &amp; humidity
+        <span class="legend"><b style="background:var(--temp)"></b>°C</span>
+        <span class="legend"><b style="background:var(--hum)"></b>%</span></h4>
+      <div class="chart" id="chartTH"></div>
+    </div>
+    <div class="card chart-card">
+      <h4>Gas level <span class="legend"><b style="background:var(--gas)"></b>raw (0–4095)</span></h4>
+      <div class="chart" id="chartGas"></div>
+    </div>
+    <div class="card chart-card">
+      <h4>Grain moisture <span class="legend"><b style="background:var(--grain)"></b>raw (0–4095)</span></h4>
+      <div class="chart" id="chartGrain"></div>
+    </div>
+    <div class="card chart-card">
+      <h4>Motion activity <span class="legend"><b style="background:var(--danger)"></b>detected</span></h4>
+      <div class="chart" id="chartMotion"></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <div class="toolbar" style="margin-top:0"><h3>Alerts &amp; events</h3></div>
+      <ul class="events" id="events"><li class="muted">No events yet</li></ul>
+    </div>
+    <div class="card">
+      <div class="toolbar" style="margin-top:0"><h3>Recent readings</h3><span class="muted" id="count"></span></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Time</th><th>Temp</th><th>Hum</th><th>Grain</th><th>Gas</th><th>Motion</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="6" class="muted">No readings yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Auto-refreshes every 3 s · <span id="updated">—</span></span>
+    <span style="display:flex;gap:8px">
+      <a class="btn" href="/api/readings.csv">⬇ Download CSV</a>
+      <button class="btn danger" id="clearBtn">Clear history</button>
+    </span>
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let limit = 120;
+let data = [];
+let lastMotionAlert = null;
+
+// Thresholds (match the ESP32 sketch)
+const GAS_WARN = 1800, GAS_DANGER = 2500;
+const GRAIN_WET = 1500, GRAIN_MED = 2800;
+const TEMP_HIGH = 30, HUM_HIGH = 65;
+
+const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const fmtShort = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+function ago(iso) {
+  const s = Math.round((Date.now() - Date.parse(iso)) / 1000);
+  if (s < 60) return s + "s ago";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  return Math.round(s / 3600) + " h ago";
+}
+function setTag(el, text, cls) { el.textContent = text.replace("_", " "); el.className = "tag " + (cls || text); }
+
+// ---------- overall status ----------
+function assess(r) {
+  const issues = [];
+  let level = "SAFE";
+  const bump = (l) => { if (l === "DANGER" || (l === "WARNING" && level === "SAFE")) level = l; };
+  if (r.gasStatus === "DANGER") { bump("DANGER"); issues.push("Dangerous gas level — ventilate the storage now"); }
+  else if (r.gasStatus === "WARNING") { bump("WARNING"); issues.push("Gas level rising — possible spoilage"); }
+  if (r.grainStatus === "WET") { bump("WARNING"); issues.push("Grain is wet — risk of mould and sprouting"); }
+  if (r.humidity != null && r.humidity > HUM_HIGH) { bump("WARNING"); issues.push(`Humidity high (${r.humidity}%)`); }
+  if (r.temperature != null && r.temperature > TEMP_HIGH) { bump("WARNING"); issues.push(`Temperature high (${r.temperature} °C)`); }
+  if (r.motion) { bump("WARNING"); issues.push("Motion detected — pests or intruder?"); }
+  if (r.temperature == null) issues.push("DHT11 sensor not reading");
+  return { level, issues };
+}
+
+function renderBanner(r, online) {
+  const b = $("banner");
+  if (!r) return;
+  const { level, issues } = assess(r);
+  b.className = "banner " + level;
+  $("bannerIcon").textContent = { SAFE: "✅", WARNING: "⚠️", DANGER: "🚨" }[level];
+  $("bannerTitle").textContent = { SAFE: "Storage conditions are good", WARNING: "Attention needed", DANGER: "DANGER" }[level]
+    + (online ? "" : " (last known — device offline)");
+  $("bannerText").textContent = issues.length ? issues.join(" · ") : "Temperature, humidity, grain moisture and gas are all within safe limits.";
+}
+
+// ---------- cards ----------
+function renderCards(r) {
+  if (!r) return;
+  $("deviceId").textContent = r.deviceId;
+  $("temp").innerHTML = (r.temperature ?? "--") + "<small> °C</small>";
+  if (r.temperature == null) setTag($("tempTag"), "N/A", "NA");
+  else setTag($("tempTag"), r.temperature > TEMP_HIGH ? "HIGH" : "OK");
+  $("hum").innerHTML = (r.humidity ?? "--") + "<small> %</small>";
+  if (r.humidity == null) setTag($("humTag"), "N/A", "NA");
+  else setTag($("humTag"), r.humidity > HUM_HIGH ? "HIGH" : "OK");
+
+  $("grain").innerHTML = (r.grainMoistureRaw ?? "--") + "<small> raw</small>";
+  setTag($("grainTag"), r.grainStatus);
+  $("grainBar").style.width = Math.min(100, (r.grainMoistureRaw || 0) / 4095 * 100) + "%";
+
+  $("gas").innerHTML = (r.gasRaw ?? "--") + "<small> raw</small>";
+  setTag($("gasTag"), r.gasStatus);
+  const gb = $("gasBar");
+  gb.style.width = Math.min(100, (r.gasRaw || 0) / 4095 * 100) + "%";
+  gb.style.background = r.gasRaw >= GAS_DANGER ? css("--danger") : r.gasRaw >= GAS_WARN ? css("--warn") : css("--safe");
+
+  $("motion").textContent = r.motion ? "Motion detected!" : "All clear";
+  $("motion").style.color = r.motion ? css("--danger") : "";
+  setTag($("motionTag"), r.motion ? "MOTION" : "CLEAR");
+  const lastM = [...data].reverse().find((d) => d.motion);
+  $("motionSub").textContent = lastM ? "Last detected " + ago(lastM.receivedAt) + " (" + fmtTime(lastM.receivedAt) + ")" : "No motion recorded";
+}
+
+// ---------- SVG line chart ----------
+function lineChart(el, rows, series, opts = {}) {
+  el.innerHTML = "";
+  if (rows.length < 2) { el.innerHTML = '<div class="empty">Waiting for more readings…</div>'; return; }
+  const W = el.clientWidth, H = el.clientHeight;
+  const m = { l: 38, r: opts.right ? 38 : 10, t: 10, b: 22 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const add = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+  const x = (i) => m.l + (rows.length === 1 ? iw / 2 : i / (rows.length - 1) * iw);
+
+  // per-axis ranges
+  const range = (s) => {
+    if (s.min != null && s.max != null) return [s.min, s.max];
+    const vals = rows.map(s.get).filter((v) => v != null);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (!isFinite(lo)) { lo = 0; hi = 1; }
+    const pad = Math.max((hi - lo) * 0.15, 1);
+    return [Math.floor(lo - pad), Math.ceil(hi + pad)];
+  };
+  series.forEach((s) => { s._r = range(s); s._y = (v) => m.t + ih - (v - s._r[0]) / (s._r[1] - s._r[0]) * ih; });
+
+  // grid + left axis labels (first series)
+  const s0 = series[0];
+  for (let k = 0; k <= 4; k++) {
+    const v = s0._r[0] + (s0._r[1] - s0._r[0]) * k / 4, yy = s0._y(v);
+    add("line", { x1: m.l, x2: m.l + iw, y1: yy, y2: yy, stroke: css("--line") });
+    add("text", { x: m.l - 6, y: yy + 4, "text-anchor": "end" }).textContent = Math.round(v);
+    if (opts.right && series[1]) {
+      const s1 = series[1], v1 = s1._r[0] + (s1._r[1] - s1._r[0]) * k / 4;
+      add("text", { x: m.l + iw + 6, y: yy + 4 }).textContent = Math.round(v1);
+    }
+  }
+  // x labels
+  const ticks = Math.min(5, rows.length);
+  for (let k = 0; k < ticks; k++) {
+    const i = Math.round(k / (ticks - 1 || 1) * (rows.length - 1));
+    add("text", { x: x(i), y: H - 4, "text-anchor": k === 0 ? "start" : k === ticks - 1 ? "end" : "middle" }).textContent = fmtShort(rows[i].receivedAt);
+  }
+  // threshold lines
+  (opts.thresholds || []).forEach((t) => {
+    const yy = s0._y(t.value);
+    add("line", { x1: m.l, x2: m.l + iw, y1: yy, y2: yy, stroke: t.color, "stroke-dasharray": "4 4", "stroke-width": 1.5 });
+    add("text", { x: m.l + iw - 4, y: yy - 4, "text-anchor": "end", style: `fill:${t.color}` }).textContent = t.label;
+  });
+  // lines
+  series.forEach((s) => {
+    let d = "", pen = false;
+    rows.forEach((r, i) => {
+      const v = s.get(r);
+      if (v == null) { pen = false; return; }
+      d += (pen ? "L" : "M") + x(i).toFixed(1) + "," + s._y(v).toFixed(1);
+      pen = true;
+    });
+    if (s.fill) add("path", { d: d + `L${x(rows.length - 1)},${m.t + ih}L${x(0)},${m.t + ih}Z`, fill: s.color, opacity: .08 });
+    add("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" });
+  });
+
+  // hover
+  const cursor = add("line", { y1: m.t, y2: m.t + ih, stroke: css("--muted"), "stroke-dasharray": "2 3", visibility: "hidden" });
+  const dots = series.map((s) => add("circle", { r: 4, fill: s.color, stroke: css("--card"), "stroke-width": 2, visibility: "hidden" }));
+  const tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip);
+  const hit = add("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" });
+  const move = (ev) => {
+    const rect = svg.getBoundingClientRect();
+    const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+    const i = Math.max(0, Math.min(rows.length - 1, Math.round((px - m.l) / iw * (rows.length - 1))));
+    const r = rows[i], cx = x(i);
+    cursor.setAttribute("x1", cx); cursor.setAttribute("x2", cx); cursor.setAttribute("visibility", "visible");
+    let minY = H;
+    series.forEach((s, k) => {
+      const v = s.get(r);
+      if (v == null) { dots[k].setAttribute("visibility", "hidden"); return; }
+      const cy = s._y(v); minY = Math.min(minY, cy);
+      dots[k].setAttribute("cx", cx); dots[k].setAttribute("cy", cy); dots[k].setAttribute("visibility", "visible");
+    });
+    tip.innerHTML = fmtTime(r.receivedAt) + "<br>" + series.map((s) => `${s.name}: <b>${s.get(r) ?? "—"}</b>${s.unit || ""}`).join("<br>");
+    tip.style.display = "block"; tip.style.left = cx + "px"; tip.style.top = (minY === H ? m.t + ih / 2 : minY) + "px";
+  };
+  const leave = () => { tip.style.display = "none"; cursor.setAttribute("visibility", "hidden"); dots.forEach((d) => d.setAttribute("visibility", "hidden")); };
+  hit.addEventListener("mousemove", move); hit.addEventListener("touchmove", move, { passive: true });
+  hit.addEventListener("mouseleave", leave); hit.addEventListener("touchend", leave);
+  el.prepend(svg);
+}
+
+function motionChart(el, rows) {
+  el.innerHTML = "";
+  if (rows.length < 2) { el.innerHTML = '<div class="empty">Waiting for more readings…</div>'; return; }
+  const W = el.clientWidth, H = el.clientHeight, m = { l: 38, r: 10, t: 10, b: 22 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, bw = Math.max(1, iw / rows.length);
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  s += `<line x1="${m.l}" x2="${m.l + iw}" y1="${m.t + ih}" y2="${m.t + ih}" stroke="${css("--line")}"/>`;
+  s += `<text x="${m.l - 6}" y="${m.t + 12}" text-anchor="end">Yes</text><text x="${m.l - 6}" y="${m.t + ih}" text-anchor="end">No</text>`;
+  rows.forEach((r, i) => {
+    if (r.motion) s += `<rect x="${(m.l + i * bw).toFixed(1)}" y="${m.t}" width="${Math.max(1.5, bw - 1).toFixed(1)}" height="${ih}" fill="${css("--danger")}" opacity=".75" rx="1"><title>${fmtTime(r.receivedAt)}</title></rect>`;
+  });
+  const n = rows.filter((r) => r.motion).length;
+  s += `<text x="${m.l}" y="${H - 4}">${fmtShort(rows[0].receivedAt)}</text><text x="${m.l + iw}" y="${H - 4}" text-anchor="end">${fmtShort(rows[rows.length - 1].receivedAt)}</text>`;
+  s += `<text x="${m.l + iw / 2}" y="${m.t + ih / 2 + 4}" text-anchor="middle">${n ? n + " detection" + (n > 1 ? "s" : "") + " in this range" : "No motion in this range"}</text>`;
+  el.innerHTML = s + "</svg>";
+}
+
+function renderCharts() {
+  lineChart($("chartTH"), data, [
+    { name: "Temp", unit: " °C", color: css("--temp"), get: (r) => r.temperature },
+    { name: "Humidity", unit: " %", color: css("--hum"), get: (r) => r.humidity },
+  ], { right: true });
+  lineChart($("chartGas"), data, [
+    { name: "Gas", color: css("--gas"), get: (r) => r.gasRaw, min: 0, max: 4095, fill: true },
+  ], { thresholds: [
+    { value: GAS_WARN, label: "Warning", color: css("--warn") },
+    { value: GAS_DANGER, label: "Danger", color: css("--danger") },
+  ] });
+  lineChart($("chartGrain"), data, [
+    { name: "Moisture", color: css("--grain"), get: (r) => r.grainMoistureRaw, min: 0, max: 4095, fill: true },
+  ], { thresholds: [
+    { value: GRAIN_WET, label: "Wet below", color: css("--info") },
+    { value: GRAIN_MED, label: "Dry above", color: css("--safe") },
+  ] });
+  motionChart($("chartMotion"), data);
+}
+
+// ---------- events + table ----------
+function renderEvents() {
+  const ev = [];
+  let prev = null;
+  for (const r of data) {
+    if (r.motion && !(prev && prev.motion)) ev.push(["🚶", "Motion detected", r.receivedAt]);
+    if (prev && r.gasStatus !== prev.gasStatus && r.gasStatus !== "WARMING_UP")
+      ev.push([r.gasStatus === "DANGER" ? "🚨" : r.gasStatus === "WARNING" ? "⚠️" : "✅", `Gas ${prev.gasStatus.replace("_", " ").toLowerCase()} → <b>${r.gasStatus}</b> (${r.gasRaw})`, r.receivedAt]);
+    if (prev && r.grainStatus !== prev.grainStatus)
+      ev.push(["🌾", `Grain moisture ${prev.grainStatus.toLowerCase()} → <b>${r.grainStatus}</b>`, r.receivedAt]);
+    if (prev && Date.parse(r.receivedAt) - Date.parse(prev.receivedAt) > 60000)
+      ev.push(["🔌", "Device reconnected", r.receivedAt]);
+    prev = r;
+  }
+  $("events").innerHTML = ev.length
+    ? ev.reverse().slice(0, 60).map(([i, t, at]) => `<li><time>${fmtTime(at)}</time><span>${i}</span><span>${t}</span></li>`).join("")
+    : '<li class="muted">No events in this range</li>';
+}
+
+function renderTable() {
+  $("count").textContent = data.length + " shown";
+  if (!data.length) return;
+  $("rows").innerHTML = data.slice(-40).reverse().map((r) => `<tr>
+    <td>${fmtTime(r.receivedAt)}</td>
+    <td>${r.temperature ?? "—"} °C</td>
+    <td>${r.humidity ?? "—"} %</td>
+    <td>${r.grainMoistureRaw} <span class="tag ${r.grainStatus}">${r.grainStatus}</span></td>
+    <td>${r.gasRaw} <span class="tag ${r.gasStatus}">${r.gasStatus.replace("_", " ")}</span></td>
+    <td>${r.motion ? '<span class="tag MOTION">YES</span>' : '<span class="muted">no</span>'}</td>
+  </tr>`).join("");
+}
+
+// ---------- browser notification on danger ----------
+let lastNotified = "";
+function maybeNotify(r) {
+  const { level, issues } = assess(r);
+  const key = level + issues.join();
+  if (level === "SAFE" || key === lastNotified) return;
+  lastNotified = key;
+  document.title = (level === "DANGER" ? "🚨 " : "⚠️ ") + "GrainGuard";
+  if ("Notification" in window && Notification.permission === "granted" && document.hidden)
+    new Notification("GrainGuard: " + level, { body: issues.join("\n") });
+}
+
+// ---------- polling ----------
+async function refresh() {
+  try {
+    const [rows, status] = await Promise.all([
+      fetch(`/api/readings?limit=${limit}`).then((r) => r.json()),
+      fetch("/api/status").then((r) => r.json()),
+    ]);
+    data = rows;
+    const conn = $("conn");
+    conn.className = "pill " + (status.online ? "online" : "offline");
+    $("connText").textContent = status.lastSeen
+      ? (status.online ? "ESP32 online · " : "ESP32 offline · last seen ") + ago(status.lastSeen)
+      : "No data from ESP32 yet";
+    const latest = data[data.length - 1];
+    if (latest) {
+      renderBanner(latest, status.online);
+      renderCards(latest);
+      maybeNotify(latest);
+      if (assess(latest).level === "SAFE") document.title = "GrainGuard Dashboard";
+    }
+    renderCharts(); renderEvents(); renderTable();
+    $("updated").textContent = "updated " + new Date().toLocaleTimeString();
+  } catch (e) {
+    $("conn").className = "pill offline";
+    $("connText").textContent = "Server not reachable";
+  }
+}
+
+$("range").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#range button").forEach((x) => x.classList.toggle("active", x === b));
+  limit = +b.dataset.n; refresh();
+});
+$("clearBtn").addEventListener("click", async () => {
+  if (!confirm("Delete all stored readings?")) return;
+  await fetch("/api/readings", { method: "DELETE" });
+  location.reload();
+});
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderCharts, 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refresh);
+document.addEventListener("click", () => { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); }, { once: true });
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>
