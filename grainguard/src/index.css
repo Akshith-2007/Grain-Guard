@@ -1,0 +1,767 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  color-scheme: dark;
+  --bg: #222222;
+  --ink: #ffffff;
+  --mute: #c4c4c4;
+  --line: #ffffff;
+  --soft: rgba(255, 255, 255, 0.28);
+  --paper: #ffffff;
+  --paper-2: #e0e0e0;
+  --grid: #d2d2d2;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --frame: 3px;
+  --off: 16px;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+  scroll-behavior: smooth;
+  background: var(--bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.serif {
+  font-family: var(--mono);
+  font-style: normal;
+  font-weight: 400;
+}
+
+/* ── Double-frame card (the signature element) ─────────────── */
+.pic {
+  position: relative;
+  padding: 0 var(--off) var(--off) 0;
+}
+
+.pic::before {
+  content: "";
+  position: absolute;
+  inset: var(--off) 0 0 var(--off);
+  border: var(--frame) solid var(--line);
+  border-radius: 26px;
+}
+
+.pic .a {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  border: var(--frame) solid var(--line);
+  border-radius: 26px;
+}
+
+.pic .a.box {
+  padding: 24px;
+}
+
+.pic .img {
+  position: relative;
+  margin: 16px 0 0 16px;
+  background: var(--paper);
+  color: #000;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.pic .a.flush {
+  padding: 0;
+}
+
+/* ── HERO ───────────────────────────────────────────────────── */
+.page {
+  position: relative;
+  z-index: 1;
+  padding: 12px 12px 0;
+}
+
+.hero {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  min-height: 640px;
+  height: calc(100vh - 12px);
+  max-height: 820px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: var(--frame) solid var(--line);
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(34, 34, 34, 0) 45%, rgba(34, 34, 34, 0.55) 100%);
+}
+
+.nav {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.logo i {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  border: var(--frame) solid #fff;
+  outline: 3px solid #000;
+  outline-offset: -8px;
+}
+
+.pill {
+  display: flex;
+  gap: 4px;
+  border: var(--frame) solid var(--line);
+  border-radius: 999px;
+  padding: 4px;
+  background: var(--bg);
+}
+
+.pill a {
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  color: #fff;
+}
+
+.pill a.on,
+.pill a:hover {
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+.btn {
+  display: inline-block;
+  cursor: pointer;
+  font: 600 15px var(--mono);
+  padding: 12px 26px;
+  border: var(--frame) solid #fff;
+  border-radius: 14px;
+  background: transparent;
+  color: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 #fff;
+}
+
+.btn.w,
+.btn.l,
+.menu {
+  background: #fff;
+  color: #000;
+}
+
+.btn.o {
+  background: var(--bg);
+}
+
+.btn:focus-visible,
+.pill a:focus-visible,
+.log button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.menu {
+  display: none;
+}
+
+.drop {
+  display: none;
+}
+
+.hero-body {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 48px 36px;
+}
+
+h1 {
+  font-weight: 700;
+  font-size: clamp(34px, 5.4vw, 68px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 22px;
+  max-width: 900px;
+}
+
+h1 .serif {
+  font-weight: 400;
+}
+
+.hero p {
+  max-width: 540px;
+  margin: 0 0 28px;
+  font-size: 17px;
+  color: var(--mute);
+}
+
+.cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 52px;
+  font-size: 14px;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--mute);
+}
+
+/* ── DASHBOARD ──────────────────────────────────────────────── */
+.dash {
+  position: relative;
+  margin: 12px 0 0;
+  border-radius: 28px;
+  clip-path: inset(0 round 28px);
+  z-index: 1;
+  /* translucent, so the fixed 3D scene stays visible down to the footer */
+  background: rgba(34, 34, 34, 0.5);
+}
+
+/* plain text that sits directly on the scene (outside the framed cards) */
+.top,
+.pcard h3,
+.pcard .v,
+.pcard .n,
+.chartcard h3,
+.chartcard .ph p.s,
+.note,
+.foot {
+  text-shadow: 0 0 14px #222, 0 1px 3px #222;
+}
+
+.in {
+  position: relative;
+  z-index: 1;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 80px 32px 64px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+}
+
+.eyebrow {
+  color: var(--mute);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-weight: 700;
+  font-size: clamp(30px, 4vw, 48px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 10px;
+  color: #fff;
+}
+
+h2 b {
+  font-weight: 700;
+}
+
+.sub {
+  color: var(--mute);
+  margin: 0;
+  font-size: 17px;
+}
+
+.live {
+  text-align: right;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.live span {
+  display: block;
+  color: var(--mute);
+  font-weight: 400;
+}
+
+/* ── SENSOR CARDS (like the "Part N" tiles) ────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px 36px;
+  margin-bottom: 64px;
+}
+
+.pcard h3,
+.chartcard h3 {
+  margin: 28px 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.pcard .img {
+  aspect-ratio: 1 / 0.92;
+  display: grid;
+  place-items: center;
+}
+
+.pcard:nth-child(even) .img {
+  background: var(--paper-2, #e0e0e0);
+}
+
+.pcard .img svg {
+  width: 52%;
+  height: auto;
+}
+
+.pcard .tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid #000;
+  border-radius: 999px;
+  padding: 1px 10px;
+  background: inherit;
+}
+
+.pcard .tag::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pcard .tag::before { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+.pcard .v {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.pcard .v small {
+  font-size: 16px;
+  margin-left: 4px;
+  color: var(--mute);
+}
+
+.pcard .n {
+  font-size: 14px;
+  color: var(--mute);
+}
+
+/* ── ASSESSMENT ─────────────────────────────────────────────── */
+.assess {
+  margin-bottom: 64px;
+}
+
+.assess .a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+}
+
+.assess .l {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.assess .sh {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  background: #fff;
+  color: #000;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.assess .sh svg {
+  width: 44px;
+  height: 44px;
+}
+
+.assess h3 {
+  margin: 4px 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.assess p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.stat {
+  padding: 0 8px;
+  border: var(--frame) solid #fff;
+  border-radius: 8px;
+}
+
+.stat.mid {
+  border-style: dashed;
+}
+
+.stat.hi {
+  background: #fff;
+  color: #000;
+}
+
+.score {
+  text-align: right;
+  min-width: 160px;
+}
+
+.score .mono {
+  font-size: 13px;
+  color: var(--mute);
+  margin-bottom: 6px;
+}
+
+.score div:nth-child(2) {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score small {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--mute);
+  margin-left: 4px;
+}
+
+.bar {
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: #fff;
+  transition: width 0.5s ease;
+}
+
+/* ── CHARTS ─────────────────────────────────────────────────── */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px 56px;
+  margin-bottom: 64px;
+}
+
+.chartcard .img {
+  padding: 18px 14px 8px;
+}
+
+.ph {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.chartcard .ph h3 {
+  margin-top: 28px;
+}
+
+.ph p.s {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.chip {
+  margin-top: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.leg {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  margin: 0 4px 10px;
+  flex-wrap: wrap;
+}
+
+.leg span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leg i {
+  width: 22px;
+  height: 4px;
+}
+
+svg.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+svg.chart text {
+  fill: #000;
+  font-size: 10px;
+  font-family: var(--mono);
+}
+
+/* ── HISTORY TABLE ──────────────────────────────────────────── */
+.log .a {
+  padding: 28px;
+}
+
+.log h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.log .ph {
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.log table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.log th {
+  padding: 12px 14px;
+  border-bottom: var(--frame) solid #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.log td {
+  padding: 14px;
+  border-bottom: 1px solid var(--soft);
+  white-space: nowrap;
+}
+
+.log tr:last-child td {
+  border-bottom: 0;
+}
+
+.tw {
+  overflow-x: auto;
+}
+
+.tw.scroll {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 12px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge.dash {
+  border-style: dashed;
+}
+
+.badge.solid {
+  background: #fff;
+  color: #000;
+}
+
+.log button {
+  background: var(--bg);
+  border: var(--frame) solid #fff;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  font: 600 13px var(--mono);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.log button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 #fff;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--mute);
+  text-align: center;
+  margin-top: 28px;
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 0;
+  border-top: var(--frame) solid #fff;
+  margin-top: 48px;
+  font-size: 13px;
+  color: var(--mute);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.foot b {
+  color: #fff;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pill,
+  .btn.w {
+    display: none;
+  }
+  .menu {
+    display: block;
+  }
+  .nav {
+    padding: 20px;
+  }
+  .hero-body {
+    padding: 0 24px 28px;
+  }
+  .drop {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 78px;
+    right: 20px;
+    background: var(--bg);
+    border: var(--frame) solid #fff;
+    border-radius: 16px;
+    padding: 10px;
+    z-index: 10;
+  }
+  .drop a {
+    padding: 8px 16px;
+  }
+  .in {
+    padding: 56px 20px 48px;
+  }
+  .cards {
+    grid-template-columns: 1fr;
+  }
+  .assess .a {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .score {
+    text-align: left;
+    width: 100%;
+  }
+}
